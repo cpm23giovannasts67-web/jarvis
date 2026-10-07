@@ -1,14 +1,18 @@
 import os
+
 from flask import Flask, request, jsonify
-from google import genai
 from flask_cors import CORS
+from google import genai
 
 app = Flask(__name__)
 CORS(app)
 
 client = genai.Client(
     api_key=os.environ.get("GEMINI_API_KEY")
-)@app.route("/")
+)
+
+
+@app.route("/")
 def home():
     return "JARVIS ONLINE"
 
@@ -24,9 +28,12 @@ def teste():
 @app.route("/jarvis", methods=["POST"])
 def jarvis():
 
-
-
     data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "error": "Nenhum dado recebido"
+        }), 400
 
     mensagem = data.get("message", "")
 
@@ -46,23 +53,32 @@ Personalidade:
 - prestativo
 - responde sempre em português do Brasil
 
-Você deve conversar naturalmente com o usuário.
-
 Usuário:
 {mensagem}
 """
 
-    resposta = client.models.generate_content(
-        model="gemini-3.8-flash",
-        contents=prompt
-    )
+    try:
 
-    return jsonify({
-        "response": resposta.text
-    })
+        resposta = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
+
+        return jsonify({
+            "response": resposta.text
+        })
+
+    except Exception as erro:
+
+        print("ERRO GEMINI:", erro)
+
+        return jsonify({
+            "error": "Erro ao consultar a inteligência artificial."
+        }), 500
 
 
 if __name__ == "__main__":
+
     app.run(
         host="0.0.0.0",
         port=int(os.environ.get("PORT", 5000))
