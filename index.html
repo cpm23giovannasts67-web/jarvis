@@ -1,32 +1,390 @@
 <!doctype html>
+
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#05070b"><meta name="description" content="Jarvis — assistente pessoal">
-<link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg">
-<title>Jarvis</title>
-<style>
-*{box-sizing:border-box}body{margin:0;background:#05070b;color:#e9f2ff;font-family:Arial,sans-serif;height:100vh;display:flex;flex-direction:column}header{padding:18px 18px 12px;border-bottom:1px solid #18202c;display:flex;align-items:center;gap:12px}.orb{width:42px;height:42px;border-radius:50%;background:radial-gradient(circle,#dff7ff 0 8%,#3fd8ff 20%,#096a8c 45%,#06151d 70%);box-shadow:0 0 24px #21cfff}.title{font-size:21px;font-weight:700}.status{font-size:12px;color:#78a8ba;margin-top:3px}.chat{flex:1;overflow:auto;padding:18px 14px 100px}.msg{max-width:88%;padding:12px 14px;border-radius:16px;margin:9px 0;line-height:1.45;white-space:pre-wrap}.jarvis{background:#101821;border:1px solid #1c3442;margin-right:auto}.user{background:#123a4a;margin-left:auto}.inputbar{position:fixed;bottom:0;left:0;right:0;background:#070a10;border-top:1px solid #18202c;padding:10px;display:flex;gap:8px;padding-bottom:calc(10px + env(safe-area-inset-bottom))}input{flex:1;background:#10151e;border:1px solid #263544;color:#fff;border-radius:24px;padding:13px 15px;outline:none}button{border:0;border-radius:50%;width:48px;height:48px;background:#123c4d;color:#9feaff;font-size:20px}button.send{border-radius:16px;width:58px}.welcome{opacity:.85}.small{font-size:12px;color:#75909d;text-align:center;margin:10px}
-</style></head>
-<body>
-<header><div class="orb"></div><div><div class="title">JARVIS</div><div class="status">Sistema online • modo local</div></div></header>
-<main id="chat" class="chat"><div class="msg jarvis welcome">Olá. Eu sou o Jarvis.\nEstou pronto para receber seus comandos.</div><div class="small">A versão atual funciona localmente. O cérebro de IA pode ser conectado depois.</div></main>
-<div class="inputbar"><button id="mic" title="Falar">🎙️</button><input id="input" autocomplete="off" placeholder="Fale ou digite um comando..."><button id="send" class="send">➤</button></div>
-<script>
-const chat=document.getElementById('chat'), input=document.getElementById('input');
-function add(text,who){const d=document.createElement('div');d.className='msg '+who;d.textContent=text;chat.appendChild(d);chat.scrollTop=chat.scrollHeight}
-function reply(t){const x=t.toLowerCase().trim();
- if(/^(oi|olá|ola|e aí|eai)/.test(x)) return 'Olá. Como posso ajudar?';
- if(x.includes('hora')) return 'Agora são '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'.';
- if(x.includes('data')||x.includes('dia hoje')) return 'Hoje é '+new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})+'.';
- if(x.includes('quem é você')||x.includes('quem e voce')) return 'Sou o Jarvis. Esta é a versão PWA do sistema, preparada para receber um cérebro de IA externo.';
- if(x.includes('limpar')){chat.innerHTML='';return 'Conversa limpa.'}
- if(x.includes('ajuda')||x.includes('comandos')) return 'Posso responder hora, data, identidade e limpar a conversa. O próximo passo é conectar a IA e as ferramentas do Jarvis.';
- return 'Recebi: “'+t+'”.\nNesta versão o cérebro de IA ainda não está conectado. Posso ser ligado a um backend/API na próxima etapa.';
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#05070b">
+<meta name="description" content="Jarvis — assistente pessoal">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<title>Jarvis</title><style>
+*{box-sizing:border-box}
+
+body{
+margin:0;
+background:#05070b;
+color:#e9f2ff;
+font-family:Arial,sans-serif;
+height:100vh;
+display:flex;
+flex-direction:column
 }
-function send(){const t=input.value.trim();if(!t)return;add(t,'user');input.value='';setTimeout(()=>add(reply(t),'jarvis'),180)}
-document.getElementById('send').onclick=send;input.addEventListener('keydown',e=>{if(e.key==='Enter')send()});
-const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-if(SR){const r=new SR();r.lang='pt-BR';r.onresult=e=>{input.value=e.results[0][0].transcript;send()};document.getElementById('mic').onclick=()=>r.start()}else document.getElementById('mic').onclick=()=>add('Seu navegador não oferece reconhecimento de voz nesta versão.','jarvis');
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-</script></body></html>
+
+header{
+padding:18px 18px 12px;
+border-bottom:1px solid #18202c;
+display:flex;
+align-items:center;
+gap:12px
+}
+
+.orb{
+width:42px;
+height:42px;
+border-radius:50%;
+background:radial-gradient(circle,#dff7ff 0 8%,#3fd8ff 20%,#096a8c 45%,#06151d 70%);
+box-shadow:0 0 24px #21cfff
+}
+
+.title{
+font-size:21px;
+font-weight:700
+}
+
+.status{
+font-size:12px;
+color:#78a8ba;
+margin-top:3px
+}
+
+.chat{
+flex:1;
+overflow:auto;
+padding:18px 14px 100px
+}
+
+.msg{
+max-width:88%;
+padding:12px 14px;
+border-radius:16px;
+margin:9px 0;
+line-height:1.45;
+white-space:pre-wrap
+}
+
+.jarvis{
+background:#101821;
+border:1px solid #1c3442;
+margin-right:auto
+}
+
+.user{
+background:#123a4a;
+margin-left:auto
+}
+
+.inputbar{
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+background:#070a10;
+border-top:1px solid #18202c;
+padding:10px;
+display:flex;
+gap:8px;
+padding-bottom:calc(10px + env(safe-area-inset-bottom))
+}
+
+input{
+flex:1;
+background:#10151e;
+border:1px solid #263544;
+color:#fff;
+border-radius:24px;
+padding:13px 15px;
+outline:none
+}
+
+button{
+border:0;
+border-radius:50%;
+width:48px;
+height:48px;
+background:#123c4d;
+color:#9feaff;
+font-size:20px
+}
+
+button.send{
+border-radius:16px;
+width:58px
+}
+
+.welcome{
+opacity:.85
+}
+
+.small{
+font-size:12px;
+color:#75909d;
+text-align:center;
+margin:10px
+}
+</style></head><body><header>
+<div class="orb"></div><div>
+<div class="title">JARVIS</div>
+<div class="status">Sistema online • IA conectada</div>
+</div>
+</header><main id="chat" class="chat"><div class="msg jarvis welcome">
+Olá. Eu sou o Jarvis.
+Estou conectado ao meu cérebro de inteligência artificial.
+</div><div class="small">
+Cérebro IA online • Gemini
+</div></main><div class="inputbar"><button id="mic" title="Falar">🎙️</button>
+
+<input
+id="input"
+autocomplete="off"
+placeholder="Fale ou digite um comando..."
+
+«»
+
+<button id="send" class="send">➤</button>
+
+</div><script>
+
+const chat = document.getElementById('chat');
+const input = document.getElementById('input');
+
+
+function add(text, who){
+
+    const d = document.createElement('div');
+
+    d.className = 'msg ' + who;
+
+    d.textContent = text;
+
+    chat.appendChild(d);
+
+    chat.scrollTop = chat.scrollHeight;
+}
+
+
+/* =========================
+   CÉREBRO DO JARVIS
+========================= */
+
+async function reply(mensagem){
+
+    try{
+
+        const resposta = await fetch(
+            'https://jarvis-0po6.onrender.com/jarvis',
+            {
+                method:'POST',
+
+                headers:{
+                    'Content-Type':'application/json'
+                },
+
+                body:JSON.stringify({
+                    message:mensagem
+                })
+            }
+        );
+
+
+        if(!resposta.ok){
+
+            throw new Error(
+                'Servidor retornou erro: ' + resposta.status
+            );
+
+        }
+
+
+        const dados = await resposta.json();
+
+
+        if(!dados.response){
+
+            throw new Error(
+                'Resposta da IA vazia'
+            );
+
+        }
+
+
+        return dados.response;
+
+
+    }catch(erro){
+
+        console.error(
+            'Erro ao conectar com o cérebro:',
+            erro
+        );
+
+
+        return 'Desculpe. Não consegui me conectar ao meu cérebro de IA neste momento.';
+    }
+
+}
+
+
+/* =========================
+   ENVIO DA MENSAGEM
+========================= */
+
+async function send(){
+
+    const texto = input.value.trim();
+
+    if(!texto) return;
+
+
+    add(texto,'user');
+
+    input.value='';
+
+
+    /* mensagem temporária */
+
+    const pensando = document.createElement('div');
+
+    pensando.className='msg jarvis';
+
+    pensando.textContent='Pensando...';
+
+    chat.appendChild(pensando);
+
+    chat.scrollTop=chat.scrollHeight;
+
+
+    /* chama a IA */
+
+    const resposta = await reply(texto);
+
+
+    /* substitui "Pensando..." */
+
+    pensando.textContent=resposta;
+
+
+    chat.scrollTop=chat.scrollHeight;
+
+}
+
+
+/* =========================
+   BOTÃO ENVIAR
+========================= */
+
+document
+.getElementById('send')
+.onclick=send;
+
+
+/* =========================
+   ENTER PARA ENVIAR
+========================= */
+
+input.addEventListener(
+    'keydown',
+    function(e){
+
+        if(e.key==='Enter'){
+
+            send();
+
+        }
+
+    }
+);
+
+
+/* =========================
+   RECONHECIMENTO DE VOZ
+========================= */
+
+const SR =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+
+if(SR){
+
+    const r = new SR();
+
+    r.lang='pt-BR';
+
+    r.continuous=false;
+
+    r.interimResults=false;
+
+
+    r.onresult=function(e){
+
+        const texto =
+            e.results[0][0].transcript;
+
+        input.value=texto;
+
+        send();
+
+    };
+
+
+    r.onerror=function(){
+
+        add(
+            'Não consegui entender o áudio.',
+            'jarvis'
+        );
+
+    };
+
+
+    document
+    .getElementById('mic')
+    .onclick=function(){
+
+        try{
+
+            r.start();
+
+        }catch(e){
+
+            console.log(e);
+
+        }
+
+    };
+
+
+}else{
+
+    document
+    .getElementById('mic')
+    .onclick=function(){
+
+        add(
+            'Seu navegador não oferece reconhecimento de voz nesta versão.',
+            'jarvis'
+        );
+
+    };
+
+}
+
+
+/* =========================
+   SERVICE WORKER
+========================= */
+
+if('serviceWorker' in navigator){
+
+    navigator
+    .serviceWorker
+    .register('sw.js')
+    .catch(
+        function(){}
+    );
+
+}
+
+</script></body>
+</html>
