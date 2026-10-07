@@ -8,14 +8,23 @@ CORS(app)
 
 client = genai.Client(
     api_key=os.environ.get("GEMINI_API_KEY")
-)
-
-@app.route("/")
+)@app.route("/")
 def home():
     return "JARVIS ONLINE"
 
+
+@app.route("/teste", methods=["GET"])
+def teste():
+    return jsonify({
+        "status": "ok",
+        "message": "O cérebro do Jarvis está acessível."
+    })
+
+
 @app.route("/jarvis", methods=["POST"])
 def jarvis():
+
+
 
     data = request.get_json()
 
